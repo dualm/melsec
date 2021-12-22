@@ -16,7 +16,7 @@ func encodeSoftComponent(component string) (McMessage, error) {
 	encodeName, base := encodeComponentName(name)
 
 	if encodeName == nil && base == -1 {
-		return nil, errors.New("wrong componnet name")
+		return nil, errors.New("wrong component name")
 	}
 
 	n, err := strconv.ParseUint(no, base, 64)
@@ -49,13 +49,13 @@ func encodeComponentName(componentName string) (McMessage, int) {
 	case "x":
 		return X_Component, Base_16
 	case "w":
-		return W_Componnet, Base_16
+		return W_Component, Base_16
 	case "d":
 		return D_Component, Base_10
 	case "r":
 		return R_Component, Base_10
 	case "b":
-		return B_Componnet, Base_16
+		return B_Component, Base_16
 	default:
 		return nil, -1
 	}

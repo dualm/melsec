@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
 )
 
 var (
@@ -14,10 +13,10 @@ var (
 	TN_Component McMessage = []byte{0xC2}
 	L_Component  McMessage = []byte{0x92}
 	F_Component  McMessage = []byte{0x93}
-	V_Componnet  McMessage = []byte{0x94}
-	B_Componnet  McMessage = []byte{0xA0}
+	V_Component  McMessage = []byte{0x94}
+	B_Component  McMessage = []byte{0xA0}
 	D_Component  McMessage = []byte{0xA8}
-	W_Componnet  McMessage = []byte{0xB4}
+	W_Component  McMessage = []byte{0xB4}
 	R_Component  McMessage = []byte{0xAF}
 
 	Base_10 int = 10
@@ -34,6 +33,7 @@ type plcOptions struct {
 
 func (plc plcOptions) generateMessage(device string, count int, values []byte) (McMessage, error) {
 	isRead := len(values) == 0
+	errorTitle := "generateMessage."
 
 	// fixedpart + datapart
 	fix := plc.getFixedPart()
@@ -41,14 +41,14 @@ func (plc plcOptions) generateMessage(device string, count int, values []byte) (
 	// datapart = datalength + command subcommand + device + count
 	timer, err := plc.getCPUTimer()
 	if err != nil {
-		return nil, fmt.Errorf("get cpu timer error: %w", err)
+		return nil, fmt.Errorf("get timer error: %s %s", errorTitle, err)
 	}
 
 	command := getSubCommand(isRead)
 
 	request, err := generateMessage(isRead, device, count, values)
 	if err != nil {
-		return nil, fmt.Errorf("generate message error: %w", err)
+		return nil, fmt.Errorf("get request error: %s, %s", errorTitle, err)
 	}
 
 	dataBuff := bytes.Buffer{}
@@ -59,7 +59,7 @@ func (plc plcOptions) generateMessage(device string, count int, values []byte) (
 	// 请求数据长度为2字节
 	requestlen, err := encodeUint(uint64(dataBuff.Len()), 2)
 	if err != nil {
-		return nil, fmt.Errorf("encode uint error: %w", err)
+		return nil, fmt.Errorf("get request len error: %s %s", errorTitle, err)
 	}
 
 	total := bytes.Buffer{}
@@ -73,6 +73,7 @@ func (plc plcOptions) generateMessage(device string, count int, values []byte) (
 
 func (plc plcOptions) generateMessageMulti(device []string, count []int, values [][]byte) (McMessage, error) {
 	isRead := len(values) == 0
+	errorTitle := "generateMessageMulti"
 
 	// fixedpart + datapart
 	fix := plc.getFixedPart()
@@ -80,14 +81,14 @@ func (plc plcOptions) generateMessageMulti(device []string, count []int, values 
 	// datapart = datalength + command subcommand + device + count
 	timer, err := plc.getCPUTimer()
 	if err != nil {
-		return nil, fmt.Errorf("generateMessageMulti error: %w", err)
+		return nil, fmt.Errorf("get timer error: %s, %s", errorTitle, err)
 	}
 
 	command := getSubCommandMulti(isRead)
 
 	request, err := generateMessageMulti(isRead, device, count, values)
 	if err != nil {
-		return nil, fmt.Errorf("generateMessageMulti error: %w", err)
+		return nil, fmt.Errorf("get request error: %s, %s", errorTitle, err)
 	}
 
 	dataBuff := bytes.Buffer{}
@@ -98,7 +99,7 @@ func (plc plcOptions) generateMessageMulti(device []string, count []int, values 
 	// 请求数据长度为2字节
 	requestlen, err := encodeUint(uint64(dataBuff.Len()), 2)
 	if err != nil {
-		return nil, fmt.Errorf("generateMessageMulti error: %w", err)
+		return nil, fmt.Errorf("get request len error: %s, %s", errorTitle, err)
 	}
 
 	total := bytes.Buffer{}
@@ -177,10 +178,10 @@ func getPlcCode() McMessage {
 	return []byte{0xFF}
 }
 
-func SetPLCCode(plccode interface{}) plcOption {
+func SetPLCCode(plcCode interface{}) plcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
-		if err := binary.Write(&buff, binary.LittleEndian, plccode.(uint)); err != nil {
+		if err := binary.Write(&buff, binary.LittleEndian, plcCode.(uint)); err != nil {
 			return err
 		}
 
@@ -190,16 +191,16 @@ func SetPLCCode(plccode interface{}) plcOption {
 	}
 }
 
-// getTagetMonudleIoNo, 返回请求目标模块IO编号.
+// getTargetModuleIoNo, 返回请求目标模块IO编号.
 func getLocalTargetModuleIoNo() McMessage {
 	return []byte{0xFF, 0x03}
 }
 
-func SetModuleIoNo(iono interface{}) plcOption {
+func SetModuleIoNo(ioNo interface{}) plcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 
-		if err := binary.Write(&buff, binary.LittleEndian, iono.(uint16)); err != nil {
+		if err := binary.Write(&buff, binary.LittleEndian, ioNo.(uint16)); err != nil {
 			return err
 		}
 
@@ -295,7 +296,7 @@ func updateMcMessage(data interface{}) (McMessage, error) {
 func generateMessage(isRead bool, device string, count int, values []byte) ([]byte, error) {
 	sc, err := encodeSoftComponent(device)
 	if err != nil {
-		return nil, fmt.Errorf("generateMessage error: %w", err)
+		return nil, fmt.Errorf("generateMessage error: %s", err)
 	}
 
 	b := bytes.Buffer{}
@@ -303,7 +304,7 @@ func generateMessage(isRead bool, device string, count int, values []byte) ([]by
 
 	softComponentCount, err := encodeUint(uint64(count), 2)
 	if err != nil {
-		return nil, fmt.Errorf("generateMesesage error: %w", err)
+		return nil, fmt.Errorf("generateMessage error: %s", err)
 	}
 
 	b.Write(softComponentCount)

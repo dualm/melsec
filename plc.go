@@ -3,6 +3,7 @@ package melsec
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -38,7 +39,7 @@ const (
 	AckDevice
 	StatusEventDevice
 	AlarmEventDevice
-	ReciveEventDevice
+	ReceiveEventDevice
 	RemoveEventDevice
 	SendEventDevice
 )
@@ -122,11 +123,12 @@ func (dev *Device) Write() error {
 
 	// 返回错误代码
 	if errorCode := buff[ResponseErrorCodeIndex : ResponseErrorCodeIndex+2]; !reflect.DeepEqual(errorCode, []byte{0x00, 0x00}) {
+		// fmt.Printf("%x\n", errorCode)
 		buff = make([]byte, ResponseErrorCodeLength)
 
 		n, err = dev.conn.Read(buff)
 		if n != ResponseErrorCodeLength {
-			return fmt.Errorf("wrong response error length")
+			return errors.New("wrong response error length")
 		}
 
 		if err != nil && err != io.EOF {
@@ -161,7 +163,7 @@ func (dev *Device) Read() error {
 	n, err := dev.conn.Read(buff)
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("connection closed accidently")
+			return errors.New("connection closed wrongly")
 		}
 		return err
 	}
@@ -191,7 +193,7 @@ func (dev *Device) Read() error {
 
 	n, err = dev.conn.Read(buff)
 	if n != dev.count*2 {
-		return fmt.Errorf("%s", "wrong reponse data length")
+		return fmt.Errorf("%s", "wrong response data length")
 	}
 
 	if err != nil && err != io.EOF {
@@ -314,7 +316,7 @@ func (dev *MultiDevice) Write() error {
 
 		n, err = dev.conn.Read(buff)
 		if n != ResponseErrorCodeLength {
-			return fmt.Errorf("wrong response error length")
+			return errors.New("wrong response error length")
 		}
 
 		if err != nil && err != io.EOF {
@@ -351,7 +353,7 @@ func (dev *MultiDevice) Read() error {
 	n, err := dev.conn.Read(buff)
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("connection closed accidently")
+			return errors.New("connection closed wrongly")
 		}
 		return err
 	}
@@ -377,13 +379,15 @@ func (dev *MultiDevice) Read() error {
 		return fmt.Errorf("errorCode: %x, error Info：%x", errorCode, buff)
 	}
 
-	totalCount := dev.totalCount()
+	totalCount := dev.totalCount()*2
 
-	buff = make([]byte, totalCount*2)
+	buff = make([]byte, totalCount)
 
 	n, err = dev.conn.Read(buff)
 	if n != totalCount {
-		return fmt.Errorf("%s", "wrong reponse data length")
+		fmt.Printf("read: % x", buff)
+
+		return fmt.Errorf("%s %d %d ", "wrong response data length", n, totalCount)
 	}
 
 	if err != nil && err != io.EOF {
