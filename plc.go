@@ -342,8 +342,6 @@ func (dev *MultiDevice) Read() error {
 		dev.readMessage = message
 	}
 
-	fmt.Printf("% x\n", dev.readMessage)
-
 	if _, err := dev.conn.Write(dev.readMessage); err != nil {
 		return err
 	}
