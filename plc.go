@@ -379,7 +379,7 @@ func (dev *MultiDevice) Read() error {
 		return fmt.Errorf("errorCode: %x, error Info：%x", errorCode, buff)
 	}
 
-	totalCount := dev.totalCount()*2
+	totalCount := dev.totalCount() * 2
 
 	buff = make([]byte, totalCount)
 

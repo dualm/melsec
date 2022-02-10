@@ -34,6 +34,7 @@ func encodeSoftComponent(component string) (McMessage, error) {
 	return append(offset, encodeName...), nil
 }
 
+// fix, eg: XA0
 func splitComponetName(component string) (string, string) {
 	index := strings.IndexFunc(component, func(r rune) bool {
 		return unicode.IsDigit(r)
