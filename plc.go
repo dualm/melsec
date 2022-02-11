@@ -170,7 +170,7 @@ func (dev *Device) Read() error {
 
 	// 一次读取数据长度异常
 	if n != FirstResponseLength {
-		return fmt.Errorf("%s", "wrong response length")
+		return fmt.Errorf("%s %s", "wrong response length", dev.Name())
 	}
 
 	// 返回错误代码
@@ -397,8 +397,8 @@ func (dev *MultiDevice) Read() error {
 	}
 
 	for i := 0; i < len(dev.count); i++ {
-		dev.value[i] = buff[:dev.count[i]]
-		buff = buff[dev.count[i]:]
+		dev.value[i] = buff[:dev.count[i]*2]
+		buff = buff[dev.count[i]*2:]
 	}
 
 	dev.changed = true
