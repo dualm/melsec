@@ -238,10 +238,17 @@ func (dev *Device) Name() string {
 }
 
 func NewConn(addr, port string, errChan chan error, ops ...plcOption) (*PlcConn, error) {
-	conn, err := net.Dial("tcp", addr+":"+port)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr+":"+port)
 	if err != nil {
 		return nil, err
 	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	conn.SetKeepAlive(true)
 
 	return &PlcConn{
 		conn,
@@ -311,7 +318,6 @@ func (dev *MultiDevice) Write() error {
 
 	// 返回错误代码
 	if errorCode := buff[ResponseErrorCodeIndex : ResponseErrorCodeIndex+2]; !reflect.DeepEqual(errorCode, []byte{0x00, 0x00}) {
-		// fmt.Printf("%x\n", errorCode)
 		buff = make([]byte, ResponseErrorCodeLength)
 
 		n, err = dev.conn.Read(buff)
