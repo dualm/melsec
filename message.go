@@ -7,16 +7,21 @@ import (
 )
 
 var (
+	// todo, manual melsec通信协议参考手册 P66
+	SM_Component McMessage = []byte{0x91}
+	SD_Component McMessage = []byte{0xA9}
 	X_Component  McMessage = []byte{0x9C}
 	Y_Component  McMessage = []byte{0x9D}
 	M_Component  McMessage = []byte{0x90}
-	TN_Component McMessage = []byte{0xC2}
 	L_Component  McMessage = []byte{0x92}
 	F_Component  McMessage = []byte{0x93}
 	V_Component  McMessage = []byte{0x94}
 	B_Component  McMessage = []byte{0xA0}
+	TN_Component McMessage = []byte{0xC2}
 	D_Component  McMessage = []byte{0xA8}
 	W_Component  McMessage = []byte{0xB4}
+	TS_Component McMessage = []byte{0xC1}
+	TC_Component McMessage = []byte{0xC0}
 	R_Component  McMessage = []byte{0xAF}
 
 	Base_10 int = 10

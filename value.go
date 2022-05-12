@@ -43,6 +43,7 @@ func splitComponetName(component string) (string, string) {
 	return component[:index], component[index:]
 }
 
+// todo, encodeComponentName, melsec通信协议参考手册 P66
 func encodeComponentName(componentName string) (McMessage, int) {
 	switch strings.ToLower(componentName) {
 	case "m":
@@ -57,6 +58,8 @@ func encodeComponentName(componentName string) (McMessage, int) {
 		return R_Component, Base_10
 	case "b":
 		return B_Component, Base_16
+	case "sm":
+		return SM_Component, Base_10
 	default:
 		return nil, -1
 	}
