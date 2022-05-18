@@ -403,8 +403,8 @@ func (dev *MultiDevice) Read() error {
 	}
 
 	for i := 0; i < len(dev.count); i++ {
-		dev.value[i] = buff[:dev.count[i]]
-		buff = buff[dev.count[i]:]
+		dev.value[i] = buff[:dev.count[i]*2]
+		buff = buff[dev.count[i]*2:]
 	}
 
 	dev.changed = true
