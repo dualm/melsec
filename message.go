@@ -33,7 +33,7 @@ type plcOptions struct {
 	plcCode               []byte
 	targetModuleIoNo      []byte
 	targetModuleStationNo []byte
-	duration              int
+	duration              []byte
 }
 
 func (plc plcOptions) generateMessage(device string, count int, values []byte) (McMessage, error) {
@@ -140,7 +140,7 @@ func newplcOption(ops []plcOption) *plcOptions {
 		plcCode:               getPlcCode(),
 		targetModuleIoNo:      getLocalTargetModuleIoNo(),
 		targetModuleStationNo: getLocalTargetModuleStationNo(),
-		duration:              1000,
+		duration:              getCPUTimer(),
 	}
 
 	for _, o := range ops {
@@ -215,6 +215,24 @@ func SetModuleIoNo(ioNo interface{}) plcOption {
 	}
 }
 
+func SetCPUTimer(t interface{}) plcOption {
+	return func(opt *plcOptions) error {
+		buff := bytes.Buffer{}
+
+		if err := binary.Write(&buff, binary.LittleEndian, t.(uint16)); err != nil {
+			return err
+		}
+
+		copy(opt.duration, (buff.Bytes()))
+
+		return nil
+	}
+}
+
+func getCPUTimer() McMessage {
+	return []byte{0x01, 0x00}
+}
+
 // getLocalTargetModuleStationNo, 返回请求目标站模块站编号.
 func getLocalTargetModuleStationNo() McMessage {
 	return []byte{0x00}
@@ -247,30 +265,9 @@ func (plc plcOptions) getFixedPart() McMessage {
 	return b.Bytes()
 }
 
-// todo
 func (plc plcOptions) getCPUTimer() (McMessage, error) {
-	return []byte{0x00, 0x00}, nil
-	// buff := new(bytes.Buffer)
-
-	// err := binary.Write(buff, binary.LittleEndian, uint16(plc.duration))
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// return buff.Bytes(), nil
+	return plc.duration, nil
 }
-
-// func (plc plcOptions) getDataPart(isRead bool) McMessage {
-// 	m := McMessage{}
-
-// 	m = append(m,
-// 		append(plc.getCPUTimer(),
-// 			append(getSubCommand(isRead), plc.getData()...)...)...)
-
-// 	l := updateMcMessage(len(m))
-
-// 	return append(l, m...)
-// }
 
 func getSubCommand(isRead bool) McMessage {
 	if isRead {
