@@ -249,15 +249,15 @@ func (plc plcOptions) getFixedPart() McMessage {
 
 // todo
 func (plc plcOptions) getCPUTimer() (McMessage, error) {
-	return []byte{0x01, 0x00}, nil
-	buff := new(bytes.Buffer)
+	return []byte{0x00, 0x00}, nil
+	// buff := new(bytes.Buffer)
 
-	err := binary.Write(buff, binary.LittleEndian, uint16(plc.duration))
-	if err != nil {
-		return nil, err
-	}
+	// err := binary.Write(buff, binary.LittleEndian, uint16(plc.duration))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return buff.Bytes(), nil
+	// return buff.Bytes(), nil
 }
 
 // func (plc plcOptions) getDataPart(isRead bool) McMessage {
