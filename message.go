@@ -230,7 +230,7 @@ func SetCPUTimer(t interface{}) plcOption {
 }
 
 func getCPUTimer() McMessage {
-	return []byte{0x01, 0x00}
+	return []byte{0x0a, 0x00}
 }
 
 // getLocalTargetModuleStationNo, 返回请求目标站模块站编号.
