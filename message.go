@@ -217,7 +217,7 @@ func SetCPUTimer(t interface{}) PlcOption {
 
 // getCPUTimer 初始化时生成默认的定时器时间
 func getCPUTimer() McMessage {
-	return []byte{0x01, 0x00}
+	return []byte{0x00, 0x00}
 }
 
 // getLocalTargetModuleStationNo, 返回请求目标站模块站编号.
