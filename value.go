@@ -11,7 +11,7 @@ import (
 
 // 编码软元件
 func encodeSoftComponent(component string) (McMessage, error) {
-	name, no := splitComponetName(component)
+	name, no := splitComponentName(component)
 
 	encodeName, base := encodeComponentName(name)
 
@@ -34,11 +34,47 @@ func encodeSoftComponent(component string) (McMessage, error) {
 	return append(offset, encodeName...), nil
 }
 
-// fix, eg: XA0
-func splitComponetName(component string) (string, string) {
+func splitComponentName(component string) (string, string) {
+	component = strings.ToUpper(component)
 	index := strings.IndexFunc(component, func(r rune) bool {
 		return unicode.IsDigit(r)
 	})
+
+LOOP:
+	for {
+		switch index {
+		case 1:
+			switch component[:index] {
+			case "X", "Y", "M", "L", "F", "V", "B", "D", "W", "Z", "R", "U":
+				break LOOP
+			default:
+				return "", ""
+			}
+		case 2:
+			switch component[:index] {
+			case "SM", "SD", "TS", "TC", "TN", "CS", "CC", "CN", "SB", "SW", "DX", "DY", "LZ", "ZR", "RD":
+				break LOOP
+			default:
+				index -= 1
+			}
+		case 3:
+			switch component[:index] {
+			case "LTS", "LTC", "LTN", "STS", "STC", "STN", "LCS", "LCC", "LCN":
+				break LOOP
+			default:
+				index -= 1
+			}
+		case 4:
+			switch component[:index] {
+			case "LSTS", "LSTC", "LSTN":
+				break LOOP
+			default:
+				index -= 1
+			}
+		default:
+			index -= 1
+		}
+	}
 
 	return component[:index], component[index:]
 }
@@ -47,19 +83,19 @@ func splitComponetName(component string) (string, string) {
 func encodeComponentName(componentName string) (McMessage, int) {
 	switch strings.ToLower(componentName) {
 	case "m":
-		return M_Component, Base_10
+		return MComponent, Base10
 	case "x":
-		return X_Component, Base_16
+		return XComponent, Base16
 	case "w":
-		return W_Component, Base_16
+		return WComponent, Base16
 	case "d":
-		return D_Component, Base_10
+		return DComponent, Base10
 	case "r":
-		return R_Component, Base_10
+		return RComponent, Base10
 	case "b":
-		return B_Component, Base_16
+		return BComponent, Base16
 	case "sm":
-		return SM_Component, Base_10
+		return SMComponent, Base10
 	default:
 		return nil, -1
 	}

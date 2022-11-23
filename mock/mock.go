@@ -15,7 +15,9 @@ func Mock(addr string) error {
 		return err
 	}
 
-	defer listener.Close()
+	defer func() {
+		_ = listener.Close()
+	}()
 
 	for {
 		conn, err := listener.Accept()
@@ -69,17 +71,17 @@ func handleConn(conn net.Conn) error {
 
 		log.Printf("data: % x", _DataBuf.Bytes())
 		// timer
-		_DataBuf.Read(_2Bytes)
+		_, _ = _DataBuf.Read(_2Bytes)
 		// cmd
-		_DataBuf.Read(_2Bytes)
+		_, _ = _DataBuf.Read(_2Bytes)
 
 		log.Printf("指令：% x", _2Bytes)
 		// cmd
-		_DataBuf.Read(_2Bytes)
+		_, _ = _DataBuf.Read(_2Bytes)
 
 		// 起始软元件编号
 		_StartSoftNo := make([]byte, 3)
-		_DataBuf.Read(_StartSoftNo)
+		_, _ = _DataBuf.Read(_StartSoftNo)
 		_StartSoftNo = append(_StartSoftNo, make([]byte, 5)...)
 
 		log.Printf("地址： %d ", binary.LittleEndian.Uint64(_StartSoftNo))

@@ -7,25 +7,26 @@ import (
 )
 
 var (
-	// todo, manual melsec通信协议参考手册 P66
-	SM_Component McMessage = []byte{0x91}
-	SD_Component McMessage = []byte{0xA9}
-	X_Component  McMessage = []byte{0x9C}
-	Y_Component  McMessage = []byte{0x9D}
-	M_Component  McMessage = []byte{0x90}
-	L_Component  McMessage = []byte{0x92}
-	F_Component  McMessage = []byte{0x93}
-	V_Component  McMessage = []byte{0x94}
-	B_Component  McMessage = []byte{0xA0}
-	TN_Component McMessage = []byte{0xC2}
-	D_Component  McMessage = []byte{0xA8}
-	W_Component  McMessage = []byte{0xB4}
-	TS_Component McMessage = []byte{0xC1}
-	TC_Component McMessage = []byte{0xC0}
-	R_Component  McMessage = []byte{0xAF}
+	// Manual melsec通信协议参考手册 P66
 
-	Base_10 int = 10
-	Base_16 int = 16
+	SMComponent McMessage = []byte{0x91}
+	SDComponent McMessage = []byte{0xA9}
+	XComponent  McMessage = []byte{0x9C}
+	YComponent  McMessage = []byte{0x9D}
+	MComponent  McMessage = []byte{0x90}
+	LComponent  McMessage = []byte{0x92}
+	FComponent  McMessage = []byte{0x93}
+	VComponent  McMessage = []byte{0x94}
+	BComponent  McMessage = []byte{0xA0}
+	TNComponent McMessage = []byte{0xC2}
+	DComponent  McMessage = []byte{0xA8}
+	WComponent  McMessage = []byte{0xB4}
+	TSComponent McMessage = []byte{0xC1}
+	TCComponent McMessage = []byte{0xC0}
+	RComponent  McMessage = []byte{0xAF}
+
+	Base10 int = 10
+	Base16 int = 16
 )
 
 type plcOptions struct {
@@ -36,84 +37,69 @@ type plcOptions struct {
 	duration              []byte
 }
 
-func (plc plcOptions) generateMessage(device string, count int, values []byte) (McMessage, error) {
-	isRead := len(values) == 0
-	errorTitle := "generateMessage."
-
-	// fixedpart + datapart
+func (plc plcOptions) makeRequest(cmd McMessage) (McMessage, error) {
 	fix := plc.getFixedPart()
 
-	// datapart = datalength + command subcommand + device + count
-	timer, err := plc.getCPUTimer()
+	timer := plc.getCPUTimer()
+
+	buf := bytes.NewBuffer(nil)
+
+	buf.Write(timer)
+	buf.Write(cmd)
+
+	requestLen, err := encodeUint(uint64(buf.Len()), 2)
 	if err != nil {
-		return nil, fmt.Errorf("get timer error: %s %s", errorTitle, err)
+		return nil, fmt.Errorf("get request len error: %w", err)
 	}
 
-	command := getSubCommand(isRead)
+	total := bytes.NewBuffer(nil)
 
-	request, err := generateMessage(isRead, device, count, values)
+	_, err = total.Write(fix)
 	if err != nil {
-		return nil, fmt.Errorf("get request error: %s, %s", errorTitle, err)
+		return nil, fmt.Errorf("write fix part to request error, %w", err)
 	}
 
-	dataBuff := bytes.Buffer{}
-	dataBuff.Write(timer)
-	dataBuff.Write(command)
-	dataBuff.Write(request)
-
-	// 请求数据长度为2字节
-	requestlen, err := encodeUint(uint64(dataBuff.Len()), 2)
+	_, err = total.Write(requestLen)
 	if err != nil {
-		return nil, fmt.Errorf("get request len error: %s %s", errorTitle, err)
+		return nil, fmt.Errorf("write len to request error, %w", err)
 	}
 
-	total := bytes.Buffer{}
-	total.Write(fix)
-	total.Write(requestlen)
-
-	dataBuff.WriteTo(&total)
+	_, err = buf.WriteTo(total)
+	if err != nil {
+		return nil, fmt.Errorf("write cmd to request error, %w", err)
+	}
 
 	return total.Bytes(), nil
 }
 
-func (plc plcOptions) generateMessageMulti(device []string, count []int, values [][]byte) (McMessage, error) {
-	isRead := len(values) == 0
-	errorTitle := "generateMessageMulti"
+func (plc plcOptions) generateMessage(device string, count int, values []byte) (McMessage, error) {
+	command := getSubOperation(len(values) == 0)
 
-	// fixedpart + datapart
-	fix := plc.getFixedPart()
-
-	// datapart = datalength + command subcommand + device + count
-	timer, err := plc.getCPUTimer()
+	request, err := generateCmd(device, count, values)
 	if err != nil {
-		return nil, fmt.Errorf("get timer error: %s, %s", errorTitle, err)
-	}
-
-	command := getSubCommandMulti(isRead)
-
-	request, err := generateMessageMulti(isRead, device, count, values)
-	if err != nil {
-		return nil, fmt.Errorf("get request error: %s, %s", errorTitle, err)
+		return nil, fmt.Errorf("get request error: %w", err)
 	}
 
 	dataBuff := bytes.Buffer{}
-	dataBuff.Write(timer)
 	dataBuff.Write(command)
 	dataBuff.Write(request)
 
-	// 请求数据长度为2字节
-	requestlen, err := encodeUint(uint64(dataBuff.Len()), 2)
+	return plc.makeRequest(dataBuff.Bytes())
+}
+
+func (plc plcOptions) generateMessageMulti(device []string, count []int, values [][]byte) (McMessage, error) {
+	command := getSubCommandMulti(len(values) == 0)
+
+	request, err := generateCmdMulti(device, count, values)
 	if err != nil {
-		return nil, fmt.Errorf("get request len error: %s, %s", errorTitle, err)
+		return nil, fmt.Errorf("get request error:  %s", err)
 	}
 
-	total := bytes.Buffer{}
-	total.Write(fix)
-	total.Write(requestlen)
+	dataBuff := bytes.Buffer{}
+	dataBuff.Write(command)
+	dataBuff.Write(request)
 
-	dataBuff.WriteTo(&total)
-
-	return total.Bytes(), nil
+	return plc.makeRequest(dataBuff.Bytes())
 }
 
 func (plc plcOptions) getNetCode() McMessage {
@@ -132,9 +118,9 @@ func (plc plcOptions) getTargetModuleStationNo() McMessage {
 	return plc.targetModuleStationNo
 }
 
-type plcOption func(*plcOptions) error
+type PlcOption func(*plcOptions) error
 
-func newplcOption(ops []plcOption) *plcOptions {
+func newPlcOption(ops []PlcOption) *plcOptions {
 	opt := &plcOptions{
 		netCode:               getLocalNetCode(),
 		plcCode:               getPlcCode(),
@@ -145,7 +131,7 @@ func newplcOption(ops []plcOption) *plcOptions {
 
 	for _, o := range ops {
 		if o != nil {
-			o(opt)
+			_ = o(opt)
 		}
 	}
 
@@ -164,11 +150,11 @@ func getLocalNetCode() McMessage {
 	return []byte{0x00}
 }
 
-func SetNetCode(netcode interface{}) plcOption {
+func SetNetCode(netCode interface{}) PlcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 
-		if err := binary.Write(&buff, binary.LittleEndian, netcode.(uint)); err != nil {
+		if err := binary.Write(&buff, binary.LittleEndian, netCode.(uint)); err != nil {
 			return err
 		}
 
@@ -183,7 +169,7 @@ func getPlcCode() McMessage {
 	return []byte{0xFF}
 }
 
-func SetPLCCode(plcCode interface{}) plcOption {
+func SetPLCCode(plcCode interface{}) PlcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 		if err := binary.Write(&buff, binary.LittleEndian, plcCode.(uint)); err != nil {
@@ -201,7 +187,7 @@ func getLocalTargetModuleIoNo() McMessage {
 	return []byte{0xFF, 0x03}
 }
 
-func SetModuleIoNo(ioNo interface{}) plcOption {
+func SetModuleIoNo(ioNo interface{}) PlcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 
@@ -215,7 +201,7 @@ func SetModuleIoNo(ioNo interface{}) plcOption {
 	}
 }
 
-func SetCPUTimer(t interface{}) plcOption {
+func SetCPUTimer(t interface{}) PlcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 
@@ -223,12 +209,13 @@ func SetCPUTimer(t interface{}) plcOption {
 			return err
 		}
 
-		copy(opt.duration, (buff.Bytes()))
+		copy(opt.duration, buff.Bytes())
 
 		return nil
 	}
 }
 
+// getCPUTimer 初始化时生成默认的定时器时间
 func getCPUTimer() McMessage {
 	return []byte{0x01, 0x00}
 }
@@ -238,7 +225,7 @@ func getLocalTargetModuleStationNo() McMessage {
 	return []byte{0x00}
 }
 
-func SetModuleStationNo(stationNo interface{}) plcOption {
+func SetModuleStationNo(stationNo interface{}) PlcOption {
 	return func(opt *plcOptions) error {
 		buff := bytes.Buffer{}
 
@@ -265,24 +252,24 @@ func (plc plcOptions) getFixedPart() McMessage {
 	return b.Bytes()
 }
 
-func (plc plcOptions) getCPUTimer() (McMessage, error) {
-	return plc.duration, nil
+func (plc plcOptions) getCPUTimer() McMessage {
+	return plc.duration
 }
 
-func getSubCommand(isRead bool) McMessage {
+func getSubOperation(isRead bool) McMessage {
 	if isRead {
-		return CommandMultiRead_Word_Binary
+		return CommandMultiReadWordBinary
 	}
 
-	return CommandMultiWrite_Word_Binary
+	return CommandMultiWriteWordBinary
 }
 
 func getSubCommandMulti(isRead bool) McMessage {
 	if isRead {
-		return CommandMultiBlockRead_Binary
+		return CommandMultiBlockReadBinary
 	}
 
-	return CommandMultiBlockWrite_Binary
+	return CommandMultiBlockWriteBinary
 }
 
 func updateMcMessage(data interface{}) (McMessage, error) {
@@ -297,7 +284,7 @@ func updateMcMessage(data interface{}) (McMessage, error) {
 }
 
 // softComponent + count + data.
-func generateMessage(isRead bool, device string, count int, values []byte) ([]byte, error) {
+func generateCmd(device string, count int, values []byte) ([]byte, error) {
 	sc, err := encodeSoftComponent(device)
 	if err != nil {
 		return nil, fmt.Errorf("generateMessage error: %s", err)
@@ -313,22 +300,22 @@ func generateMessage(isRead bool, device string, count int, values []byte) ([]by
 
 	b.Write(softComponentCount)
 
-	if isRead {
-		return b.Bytes(), nil
-	} else {
+	if len(values) != 0 {
 		b.Write(values)
 		return b.Bytes(), nil
 	}
+
+	return b.Bytes(), nil
 }
 
 // softComponent + count + data.
-func generateMessageMulti(isRead bool, device []string, count []int, values [][]byte) ([]byte, error) {
+func generateCmdMulti(device []string, count []int, values [][]byte) ([]byte, error) {
 	re := make([]byte, 0)
 
 	var wordCount, bitCount int8
 
 	for i := 0; i < len(device); i++ {
-		_compoType, _ := splitComponetName(device[i])
+		_compoType, _ := splitComponentName(device[i])
 		_bitSize, _wordSize := componentBitSize(_compoType)
 		wordCount += _wordSize
 		bitCount += _bitSize
@@ -348,12 +335,11 @@ func generateMessageMulti(isRead bool, device []string, count []int, values [][]
 
 		b.Write(softComponentCount)
 
-		if isRead {
-			re = append(re, b.Bytes()...)
-		} else {
+		if len(values) != 0 {
 			b.Write(values[i])
-			re = append(re, b.Bytes()...)
 		}
+
+		re = append(re, b.Bytes()...)
 	}
 
 	re = append([]byte{byte(wordCount), byte(bitCount)}, re...)

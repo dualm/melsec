@@ -1,0 +1,18 @@
+package melsec
+
+var (
+	// SubCommandMultiRead_Bit_Binary  McMessage = []byte{0x01, 0x04, 0x01, 0x00}
+
+	CommandMultiReadWordBinary McMessage = []byte{0x01, 0x04, 0x00, 0x00}
+
+	// SubCommandMultiWrite_Bit_Binary  McMessage = []byte{0x01, 0x14, 0x01, 0x00}
+
+	CommandMultiWriteWordBinary McMessage = []byte{0x01, 0x14, 0x00, 0x00}
+
+	// CommandRandomRead_Word_Binary McMessage = []byte{0x01, 0x04, 0x00, 0x00}
+
+	CommandMultiBlockReadBinary  McMessage = []byte{0x06, 0x04, 0x00, 0x00}
+	CommandMultiBlockWriteBinary McMessage = []byte{0x06, 0x14, 0x00, 0x00}
+
+	CodeOK = []byte{0x00, 0x00}
+)
