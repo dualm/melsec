@@ -1,6 +1,7 @@
 package melsec
 
 import (
+	"errors"
 	"reflect"
 	"sync"
 )
@@ -135,7 +136,11 @@ func (dev *MultiDevice) AddBlock(name string, count int) {
 	dev.mValue = append(dev.mValue, make([]byte, 0))
 }
 
-func NewMultiDevice(conn *PlcConn) *MultiDevice {
+func NewMultiDevice(conn *PlcConn) (*MultiDevice, error) {
+	if conn == nil {
+		return nil, errors.New("nil plc connection")
+	}
+
 	return &MultiDevice{
 		lock:        sync.Mutex{},
 		name:        make([]string, 0),
@@ -146,5 +151,5 @@ func NewMultiDevice(conn *PlcConn) *MultiDevice {
 		Error:       nil,
 		conn:        conn,
 		changed:     false,
-	}
+	}, nil
 }

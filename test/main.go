@@ -18,7 +18,10 @@ func main() {
 
 	log.Println(conn.GetCPUInfo())
 
-	svDevice0 := melsec.NewDevice("D12000", 480, conn)
+	svDevice0, err := melsec.NewDevice("D12000", 480, conn)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	t := time.Now()
 	if err := svDevice0.Read(); err == nil {
@@ -26,9 +29,15 @@ func main() {
 	}
 	log.Println(time.Since(t).Milliseconds(), "ms")
 
-	svDevice1 := melsec.NewMultiDevice(conn)
-	svDevice2 := melsec.NewMultiDevice(conn)
-	// svDevice3 := melsec.NewMultiDevice(conn)
+	svDevice1, err := melsec.NewMultiDevice(conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	svDevice2, err := melsec.NewMultiDevice(conn)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// 添加数据区块
 	svDevice1.AddBlock("D12000", 48) // 0
@@ -64,7 +73,11 @@ func main() {
 	}
 	log.Println(time.Since(t).Milliseconds(), "ms")
 
-	svDevice := melsec.NewDevice("D12000", 1, conn)
+	svDevice, err := melsec.NewDevice("D12000", 1, conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	t = time.Now()
 	err = svDevice.Read()
 	if err != nil {

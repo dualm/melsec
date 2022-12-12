@@ -3,6 +3,7 @@ package melsec
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"reflect"
 	"sync"
 )
@@ -21,7 +22,16 @@ type Device struct {
 	changed     bool
 }
 
-func NewDevice(name string, count int, plc *PlcConn) *Device {
+func NewDevice(name string, count int, plc *PlcConn) (*Device, error) {
+	if name == "" {
+		return nil, errors.New("empty address")
+	}
+	if count == 0 {
+		return nil, errors.New("count is 0")
+	}
+	if plc == nil {
+		return nil, errors.New("nil plc connection")
+	}
 	return &Device{
 		name:        name,
 		count:       count,
@@ -29,7 +39,7 @@ func NewDevice(name string, count int, plc *PlcConn) *Device {
 		readMessage: make([]byte, 0),
 		Error:       nil,
 		conn:        plc,
-	}
+	}, nil
 }
 
 func (dev *Device) Count() int {

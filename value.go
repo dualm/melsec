@@ -24,8 +24,8 @@ func encodeSoftComponent(component string) (McMessage, error) {
 		return nil, err
 	}
 
-	// Q系列3字节软元件编号
-	// iQ系列4字节软件编号
+	// Q系列3个字节软元件编号
+	// iQ系列4个字节软件编号
 	offset, err := encodeUint(n, 3)
 	if err != nil {
 		return nil, err

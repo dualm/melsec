@@ -49,7 +49,7 @@ func handleConn(conn net.Conn) error {
 
 		if n, err := conn.Read(_2Bytes); err != nil {
 			if err == io.EOF || n != 2 {
-				return fmt.Errorf("消息长度错误, 正确格式应该为2字节")
+				return fmt.Errorf("消息长度错误, 正确格式应该为2个字节")
 			}
 
 			return err

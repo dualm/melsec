@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	errorBeyondLimit = errors.New("读/写点的数目在允许范围之外，请减少点数并重新尝试")
-	errorTimeout     = errors.New("以太网模块和PLC CPU之间的通讯时间超过CPU监视定时器的时间")
-	errorUnknown     = errors.New("未知错误")
+	errorTimeout = errors.New("以太网模块和PLC CPU之间的通讯时间超过CPU监视定时器的时间")
+	errorUnknown = errors.New("未知错误")
 )
 
 func ErrorSelect(errCode []byte) error {
