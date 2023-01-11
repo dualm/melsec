@@ -3,11 +3,9 @@ package melsec
 import (
 	"errors"
 	"reflect"
-	"sync"
 )
 
 type MultiDevice struct {
-	lock        sync.Mutex
 	name        []string
 	count       []int
 	value       [][]byte
@@ -23,16 +21,10 @@ func (dev *MultiDevice) Count() []int {
 }
 
 func (dev *MultiDevice) Changed() bool {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	return dev.changed
 }
 
 func (dev *MultiDevice) Write() error {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	if dev.mValue == nil {
 		return nil
 	}
@@ -56,9 +48,6 @@ func (dev *MultiDevice) Write() error {
 }
 
 func (dev *MultiDevice) getReadMessage() (McMessage, error) {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	if len(dev.readMessage) == 0 {
 		message, err := dev.conn.option.generateMessageMulti(dev.name, dev.count, nil)
 		if err != nil {
@@ -86,9 +75,6 @@ func (dev *MultiDevice) Read() error {
 		return nil
 	}
 
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	for i := 0; i < len(dev.count); i++ {
 		dev.value[i] = buff[:dev.count[i]*2]
 		buff = buff[dev.count[i]*2:]
@@ -100,9 +86,6 @@ func (dev *MultiDevice) Read() error {
 }
 
 func (dev *MultiDevice) GetValue() [][]byte {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	dev.changed = false
 
 	return dev.value
@@ -118,9 +101,6 @@ func (dev *MultiDevice) totalCount() int {
 }
 
 func (dev *MultiDevice) SetValue(val [][]byte) {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	dev.mValue = val
 	dev.changed = false
 }
@@ -142,7 +122,6 @@ func NewMultiDevice(conn *PlcConn) (*MultiDevice, error) {
 	}
 
 	return &MultiDevice{
-		lock:        sync.Mutex{},
 		name:        make([]string, 0),
 		count:       make([]int, 0),
 		value:       make([][]byte, 0),

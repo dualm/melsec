@@ -5,13 +5,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"reflect"
-	"sync"
 )
 
 type DeviceType uint8
 
 type Device struct {
-	lock        sync.Mutex
 	name        string
 	count       int
 	value       []byte
@@ -47,15 +45,11 @@ func (dev *Device) Count() int {
 }
 
 func (dev *Device) Changed() bool {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	return dev.changed
 }
 
 // Write 执行写入操作, 写入内容为最近一次SetValue时传入的值.
 func (dev *Device) Write() error {
-
 	if dev.mValue == nil {
 		return nil
 	}
@@ -71,11 +65,9 @@ func (dev *Device) Write() error {
 	}
 
 	// 更新数据
-	dev.lock.Lock()
 	copy(dev.value, dev.mValue)
 	dev.changed = true
 	dev.mValue = nil
-	dev.lock.Unlock()
 
 	return nil
 }
@@ -99,18 +91,13 @@ func (dev *Device) Read() error {
 		return nil
 	}
 
-	dev.lock.Lock()
 	dev.value = buff
 	dev.changed = true
-	dev.lock.Unlock()
 
 	return nil
 }
 
 func (dev *Device) GetValue() []byte {
-	dev.lock.Lock()
-	defer dev.lock.Unlock()
-
 	dev.changed = false
 
 	return dev.value
@@ -124,10 +111,8 @@ func (dev *Device) SetValue(val []byte) {
 		_ = binary.Write(buffer, binary.LittleEndian, uint16(0))
 	}
 
-	dev.lock.Lock()
 	dev.mValue = buffer.Bytes()
 	dev.changed = false
-	dev.lock.Unlock()
 }
 
 func (dev *Device) Name() string {
