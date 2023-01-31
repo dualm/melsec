@@ -24,6 +24,7 @@ var (
 	TSComponent McMessage = []byte{0xC1}
 	TCComponent McMessage = []byte{0xC0}
 	RComponent  McMessage = []byte{0xAF}
+	CNComponent McMessage = []byte{0xC5}
 
 	Base10 int = 10
 	Base16 int = 16

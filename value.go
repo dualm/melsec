@@ -112,6 +112,8 @@ func encodeComponentName(componentName string) (McMessage, int) {
 		return TSComponent, Base10
 	case "tc":
 		return TCComponent, Base10
+	case "cn":
+		return CNComponent, Base10
 	default:
 		return nil, -1
 	}
