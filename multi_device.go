@@ -24,7 +24,7 @@ func (dev *MultiDevice) Changed() bool {
 	return dev.changed
 }
 
-func (dev *MultiDevice) Write() error {
+func (dev *MultiDevice) Write(debug bool) error {
 	if dev.mValue == nil {
 		return nil
 	}
@@ -34,7 +34,7 @@ func (dev *MultiDevice) Write() error {
 		return err
 	}
 
-	_, err = dev.conn.SendCmd(message, 0)
+	_, err = dev.conn.SendCmd(message, 0, debug)
 	if err != nil {
 		return err
 	}
@@ -60,13 +60,13 @@ func (dev *MultiDevice) getReadMessage() (McMessage, error) {
 	return dev.readMessage, nil
 }
 
-func (dev *MultiDevice) Read() error {
+func (dev *MultiDevice) Read(debug bool) error {
 	msg, err := dev.getReadMessage()
 	if err != nil {
 		return err
 	}
 
-	buff, err := dev.conn.SendCmd(msg, dev.totalCount()*2)
+	buff, err := dev.conn.SendCmd(msg, dev.totalCount()*2, debug)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"log"
 	"reflect"
 )
 
@@ -49,7 +50,7 @@ func (dev *Device) Changed() bool {
 }
 
 // Write 执行写入操作, 写入内容为最近一次SetValue时传入的值.
-func (dev *Device) Write() error {
+func (dev *Device) Write(debug bool) error {
 	if dev.mValue == nil {
 		return nil
 	}
@@ -59,7 +60,7 @@ func (dev *Device) Write() error {
 		return err
 	}
 
-	_, err = dev.conn.SendCmd(message, 0)
+	_, err = dev.conn.SendCmd(message, 0, debug)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (dev *Device) Write() error {
 	return nil
 }
 
-func (dev *Device) Read() error {
+func (dev *Device) Read(debug bool) error {
 	if len(dev.readMessage) == 0 {
 		message, err := dev.conn.option.generateMessage(dev.name, dev.count, nil)
 		if err != nil {
@@ -82,7 +83,11 @@ func (dev *Device) Read() error {
 		dev.readMessage = message
 	}
 
-	buff, err := dev.conn.SendCmd(dev.readMessage, dev.count*2)
+	if debug {
+		log.Printf("sending: % x", dev.readMessage)
+	}
+
+	buff, err := dev.conn.SendCmd(dev.readMessage, dev.count*2, debug)
 	if err != nil {
 		return err
 	}
@@ -93,6 +98,10 @@ func (dev *Device) Read() error {
 
 	dev.value = buff
 	dev.changed = true
+
+	if debug {
+		log.Printf("response: % x", buff)
+	}
 
 	return nil
 }

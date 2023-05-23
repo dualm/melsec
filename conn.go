@@ -2,7 +2,9 @@ package melsec
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"log"
 	"net"
 	"reflect"
 )
@@ -40,7 +42,7 @@ type PlcConn struct {
 	option *plcOptions
 }
 
-func (plc *PlcConn) SendCmd(msg McMessage, retSize int) ([]byte, error) {
+func (plc *PlcConn) SendCmd(msg McMessage, retSize int, debug bool) ([]byte, error) {
 	_, err := plc.Write(msg)
 	if err != nil {
 		return nil, err
@@ -50,7 +52,11 @@ func (plc *PlcConn) SendCmd(msg McMessage, retSize int) ([]byte, error) {
 
 	_, err = io.ReadFull(plc, buff)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("got % x, %w", buff, err)
+	}
+
+	if debug {
+		log.Printf("first response: % x", buff)
 	}
 
 	// 返回错误代码
@@ -61,6 +67,8 @@ func (plc *PlcConn) SendCmd(msg McMessage, retSize int) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		log.Printf("errorcode: % x", buff)
 
 		return nil, ErrorSelect(errorCode)
 	}
@@ -85,7 +93,7 @@ func (plc *PlcConn) GetCPUInfo() (string, error) {
 		return "", err
 	}
 
-	_b, err := plc.SendCmd(cmd, 18)
+	_b, err := plc.SendCmd(cmd, 18, false)
 	if err != nil {
 		return "", err
 	}
