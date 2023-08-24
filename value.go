@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -12,6 +13,9 @@ import (
 // 编码软元件
 func encodeSoftComponent(component string) (McMessage, error) {
 	name, no := splitComponentName(component)
+	if name == "" {
+		return nil, fmt.Errorf("错误的melsec点位类型, %s", component)
+	}
 
 	encodeName, base := encodeComponentName(name)
 
@@ -43,6 +47,8 @@ func splitComponentName(component string) (string, string) {
 LOOP:
 	for {
 		switch index {
+		case 0:
+			return "", component
 		case 1:
 			switch component[:index] {
 			case "X", "Y", "M", "L", "F", "V", "B", "D", "W", "Z", "R", "U":

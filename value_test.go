@@ -42,7 +42,7 @@ func Test_splitComponetName(t *testing.T) {
 	}
 }
 
-func Test_splitComponetName1(t *testing.T) {
+func Test_splitComponentName1(t *testing.T) {
 	type args struct {
 		component string
 	}
@@ -107,6 +107,14 @@ func Test_splitComponetName1(t *testing.T) {
 			},
 			"X",
 			"01",
+		},
+		{
+			name: "8",
+			args: args{
+				component: "1231",
+			},
+			want:  "",
+			want1: "1231",
 		},
 	}
 	for _, tt := range tests {

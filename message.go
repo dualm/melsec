@@ -317,6 +317,10 @@ func generateCmdMulti(device []string, count []int, values [][]byte) ([]byte, er
 
 	for i := 0; i < len(device); i++ {
 		_compoType, _ := splitComponentName(device[i])
+		if _compoType == "" {
+			return nil, fmt.Errorf("错误的melsec点位类型, %s", device[i])
+		}
+
 		_bitSize, _wordSize := componentBitSize(_compoType)
 		wordCount += _wordSize
 		bitCount += _bitSize
